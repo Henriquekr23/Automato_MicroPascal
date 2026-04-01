@@ -1,0 +1,48 @@
+digraph AFD {
+    rankdir=LR;
+    node [shape = circle];
+
+    // Estados Finais (círculos com borda dupla)
+    q0 [shape = doublecircle];
+    qID [shape = doublecircle];
+    qNUM_INT [shape = doublecircle];
+    qNUM_REAL [shape = doublecircle];
+    qCOLON [shape = doublecircle];
+    qLT [shape = doublecircle];
+    qGT [shape = doublecircle];
+
+    // Estado inicial
+    start [shape=point];
+    start -> q0;
+
+    // Identificador
+    q0 -> qID [label="L"];
+    qID -> qID [label="L | D"];
+
+    // Número inteiro
+    q0 -> qNUM_INT [label="D"];
+    qNUM_INT -> qNUM_INT [label="D"];
+    qNUM_INT -> qNUM_REAL_DOT [label="."];
+
+    // Número real
+    qNUM_REAL_DOT -> qNUM_REAL [label="D"];
+    qNUM_REAL -> qNUM_REAL [label="D"];
+
+    // Dois pontos
+    q0 -> qCOLON [label=":"];
+    qCOLON -> OP_ASS [label="="];
+
+    // Menor (lowest)
+    q0 -> qLT [label="<"];
+    qLT -> OP_LE [label="="];
+    qLT -> OP_NE [label=">"];
+
+    // Maior (greater)
+    q0 -> qGT [label=">"];
+    qGT -> OP_GE [label="="];
+
+    // Comentário
+    q0 -> qCOMMENT [label="{"];
+    qCOMMENT -> qCOMMENT [label="qualquer exceto }"];
+    qCOMMENT -> q0 [label="}"];
+}
