@@ -3,7 +3,6 @@ digraph AFD {
     node [shape = circle];
 
     // Estados Finais (círculos com borda dupla)
-    q0 [shape = doublecircle];
     qID [shape = doublecircle];
     qNUM_INT [shape = doublecircle];
     qNUM_REAL [shape = doublecircle];
