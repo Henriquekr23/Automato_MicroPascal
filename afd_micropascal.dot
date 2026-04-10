@@ -1,47 +1,71 @@
-digraph AFD {
+digraph AFD_MicroPascal {
+
     rankdir=LR;
-    node [shape = circle];
+    fontsize=12;
+    labelloc="t";
+    label="AFD - Analisador Léxico MicroPascal";
 
-    // Estados Finais (círculos com borda dupla)
-    qID [shape = doublecircle];
-    qNUM_INT [shape = doublecircle];
-    qNUM_REAL [shape = doublecircle];
-    qCOLON [shape = doublecircle];
-    qLT [shape = doublecircle];
-    qGT [shape = doublecircle];
+    node [shape=circle, fontname="Arial"];
 
-    // Estado inicial
-    start [shape=point];
-    start -> q0;
+    // ESTADOS FINAIS
+    qIDENTIFICADOR [shape=doublecircle];
+    qNUMERO_INTEIRO [shape=doublecircle];
+    qNUMERO_REAL [shape=doublecircle];
+    qNUMERO_EXPOENTE [shape=doublecircle];
 
-    // Identificador
-    q0 -> qID [label="L"];
-    qID -> qID [label="L | D"];
+    qDOIS_PONTOS [shape=doublecircle];
+    qMENOR [shape=doublecircle];
+    qMAIOR [shape=doublecircle];
 
-    // Número inteiro
-    q0 -> qNUM_INT [label="D"];
-    qNUM_INT -> qNUM_INT [label="D"];
-    qNUM_INT -> qNUM_REAL_DOT [label="."];
+    ATRIBUICAO [shape=doublecircle];
+    MENOR_IGUAL [shape=doublecircle];
+    DIFERENTE [shape=doublecircle];
+    MAIOR_IGUAL [shape=doublecircle];
 
-    // Número real
-    qNUM_REAL_DOT -> qNUM_REAL [label="D"];
-    qNUM_REAL -> qNUM_REAL [label="D"];
+    // ESTADO q0
+    ponto [shape=point];
+    ponto -> q0;
 
-    // Dois pontos
-    q0 -> qCOLON [label=":"];
-    qCOLON -> OP_ASS [label="="];
+    // IDENTIFICADORES
+    q0 -> qIDENTIFICADOR [label="letra"];
+    qIDENTIFICADOR -> qIDENTIFICADOR [label="letra | dígito"];
 
-    // Menor (lowest)
-    q0 -> qLT [label="<"];
-    qLT -> OP_LE [label="="];
-    qLT -> OP_NE [label=">"];
+    // NÚMEROS
+    q0 -> qNUMERO_INTEIRO [label="dígito"];
+    q0 -> qSINAL [label="+ | -"];
 
-    // Maior (greater)
-    q0 -> qGT [label=">"];
-    qGT -> OP_GE [label="="];
+    qSINAL -> qNUMERO_INTEIRO [label="dígito"];
 
-    // Comentário
-    q0 -> qCOMMENT [label="{"];
-    qCOMMENT -> qCOMMENT [label="qualquer exceto }"];
-    qCOMMENT -> q0 [label="}"];
+    qNUMERO_INTEIRO -> qNUMERO_INTEIRO [label="dígito"];
+    qNUMERO_INTEIRO -> qPONTO_DECIMAL [label="."];
+
+    qPONTO_DECIMAL -> qNUMERO_REAL [label="dígito"];
+    qNUMERO_REAL -> qNUMERO_REAL [label="dígito"];
+
+    // Expoente
+    qNUMERO_INTEIRO -> qINICIO_EXPOENTE [label="E | e"];
+    qNUMERO_REAL -> qINICIO_EXPOENTE [label="E | e"];
+
+    qINICIO_EXPOENTE -> qSINAL_EXPOENTE [label="+ | -"];
+    qINICIO_EXPOENTE -> qNUMERO_EXPOENTE [label="dígito"];
+
+    qSINAL_EXPOENTE -> qNUMERO_EXPOENTE [label="dígito"];
+    qNUMERO_EXPOENTE -> qNUMERO_EXPOENTE [label="dígito"];
+
+    // OPERADORES
+    q0 -> qDOIS_PONTOS [label=":"];
+    qDOIS_PONTOS -> ATRIBUICAO [label="="];
+
+    q0 -> qMENOR [label="<"];
+    qMENOR -> MENOR_IGUAL [label="="];
+    qMENOR -> DIFERENTE [label=">"];
+
+    q0 -> qMAIOR [label=">"];
+    qMAIOR -> MAIOR_IGUAL [label="="];
+
+    // COMENTÁRIOS
+    q0 -> qCOMENTARIO [label="{"];
+    qCOMENTARIO -> qCOMENTARIO [label="qualquer exceto }"];
+    qCOMENTARIO -> q0 [label="}"];
+
 }

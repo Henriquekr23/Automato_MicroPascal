@@ -3,7 +3,12 @@
 #include <stdbool.h>
 
 typedef enum {
-    q0, qID, qNUM_INT, qCOLON, qLT, qGT, qCOMMENT, qNUM_REAL_DOT, qNUM_REAL, OP_ASS, OP_LE, OP_NE, OP_GE, DEAD
+    q0, qIDENTIFICADOR, qSINAL,
+    qNUMERO_INTEIRO, qPONTO_DECIMAL, qNUM_REAL,
+    qINICIO_EXPOENTE, qSINAL_EXPOENTE, qNUMERO_EXPOENTE,
+    qDOIS_PONTOS, qMENOR, qMAIOR, qCOMENTARIO,
+    ATRIBUICAO, MENOR_IGUAL, DIFERENTE, MAIOR_IGUAL,
+    DEAD
 } State;
 
 typedef enum {
@@ -37,48 +42,68 @@ State verificador(State s, char c) {
 
         case q0:
             if (tipo == ESPACO) return q0;
-            if (tipo == LETRA) return qID;
-            if (tipo == DIGITO) return qNUM_INT;
-            if (tipo == DOIS_PONTOS) return qCOLON;
-            if (tipo == MENOR) return qLT;
-            if (tipo == MAIOR) return qGT;
-            if (tipo == LBRACE) return qCOMMENT;
+            if (tipo == LETRA) return qIDENTIFICADOR;
+            if (tipo == DIGITO) return qNUMERO_INTEIRO;
+            if (c == '+' || c == '-') return qSINAL;
+            if (tipo == DOIS_PONTOS) return qDOIS_PONTOS;
+            if (tipo == MENOR) return qMENOR;
+            if (tipo == MAIOR) return qMAIOR;
+            if (tipo == LBRACE) return qCOMENTARIO;
             if (tipo == DELIMITADOR) return q0;
             return DEAD;
 
-        case qID:
-            if (tipo == LETRA || tipo == DIGITO) return qID;
+        case qIDENTIFICADOR:
+            if (tipo == LETRA || tipo == DIGITO) return qIDENTIFICADOR;
             return DEAD;
 
-        case qNUM_INT:
-            if (tipo == DIGITO) return qNUM_INT;
-            if (c == '.') return qNUM_REAL_DOT;
+        case qSINAL:
+            if (tipo == DIGITO) return qNUMERO_INTEIRO;
             return DEAD;
 
-        case qNUM_REAL_DOT:
+        case qNUMERO_INTEIRO:
+            if (tipo == DIGITO) return qNUMERO_INTEIRO;
+            if (c == '.') return qPONTO_DECIMAL;
+            if (c == 'E' || c == 'e') return qINICIO_EXPOENTE;
+            return DEAD;
+
+        case qPONTO_DECIMAL:
             if (tipo == DIGITO) return qNUM_REAL;
             return DEAD;
 
         case qNUM_REAL:
             if (tipo == DIGITO) return qNUM_REAL;
+            if (c == 'E' || c == 'e') return qINICIO_EXPOENTE;
             return DEAD;
 
-        case qCOLON:
-            if (tipo == IGUAL) return OP_ASS;
+        case qINICIO_EXPOENTE:
+            if (c == '+' || c == '-') return qSINAL_EXPOENTE;
+            if (tipo == DIGITO) return qNUMERO_EXPOENTE;
             return DEAD;
 
-        case qLT:
-            if (tipo == IGUAL) return OP_LE;
-            if (tipo == MAIOR) return OP_NE;
+        case qSINAL_EXPOENTE:
+            if (tipo == DIGITO) return qNUMERO_EXPOENTE;
             return DEAD;
 
-        case qGT:
-            if (tipo == IGUAL) return OP_GE;
+        case qNUMERO_EXPOENTE:
+            if (tipo == DIGITO) return qNUMERO_EXPOENTE;
             return DEAD;
 
-        case qCOMMENT:
+        case qDOIS_PONTOS:
+            if (tipo == IGUAL) return ATRIBUICAO;
+            return DEAD;
+
+        case qMENOR:
+            if (tipo == IGUAL) return MENOR_IGUAL;
+            if (tipo == MAIOR) return DIFERENTE;
+            return DEAD;
+
+        case qMAIOR:
+            if (tipo == IGUAL) return MAIOR_IGUAL;
+            return DEAD;
+
+        case qCOMENTARIO:
             if (tipo == RBRACE) return q0;
-            return qCOMMENT;
+            return qCOMENTARIO;
 
         default:
             return DEAD;
@@ -87,24 +112,27 @@ State verificador(State s, char c) {
 
 // ESTADOS FINAIS
 bool ehEstadoFinal(State s) {
-    return (s == qID || s == qNUM_INT || s == qNUM_REAL ||
-        s == qCOLON || s == qLT || s == qGT ||
-        s == OP_ASS || s == OP_LE || s == OP_NE || s == OP_GE);
+    return (
+        s == qIDENTIFICADOR || s == qNUMERO_INTEIRO || s == qNUM_REAL ||
+        s == qNUMERO_EXPOENTE ||
+        s == qDOIS_PONTOS || s == qMENOR || s == qMAIOR ||
+        s == ATRIBUICAO || s == MENOR_IGUAL || s == DIFERENTE || s == MAIOR_IGUAL
+    );
 }
 
 // NOME DO ESTADO
 const char* nomeEstado(State s) {
     switch(s) {
-        case qID: return "ID";
-        case qNUM_INT: return "NUM_INT";
+        case qIDENTIFICADOR: return "ID";
+        case qNUMERO_INTEIRO: return "NUM_INT";
         case qNUM_REAL: return "NUM_REAL";
-        case OP_ASS: return "OP_ASS";
-        case OP_LE: return "OP_LE";
-        case OP_NE: return "OP_NE";
-        case OP_GE: return "OP_GE";
-        case qCOLON: return "COLON";
-        case qLT: return "LT";
-        case qGT: return "GT";
+        case ATRIBUICAO: return "ATRIBUICAO";
+        case MENOR_IGUAL: return "MENOR_IGUAL";
+        case DIFERENTE: return "DIFERENTE";
+        case MAIOR_IGUAL: return "MAIOR_IGUAL";
+        case qDOIS_PONTOS: return "COLON";
+        case qMENOR: return "LT";
+        case qMAIOR: return "GT";
         default: return "INVALIDO";
     }
 }
@@ -176,9 +204,6 @@ int main() {
             coluna = 0;
         }
     }
-
     fclose(arquivo);
     return 0;
 }
-
-//oi
