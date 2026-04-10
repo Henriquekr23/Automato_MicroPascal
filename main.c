@@ -180,3 +180,5 @@ int main() {
     fclose(arquivo);
     return 0;
 }
+
+//oi
