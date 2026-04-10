@@ -3,10 +3,8 @@
 #include <stdbool.h>
 
 typedef enum {
-    q0, qIDENTIFICADOR, qSINAL,
-    qNUMERO_INTEIRO, qPONTO_DECIMAL, qNUM_REAL,
-    qINICIO_EXPOENTE, qSINAL_EXPOENTE, qNUMERO_EXPOENTE,
-    qDOIS_PONTOS, qMENOR, qMAIOR, qCOMENTARIO,
+    q0, qIDENTIFICADOR, qSINAL, qNUMERO_INTEIRO, qPONTO_DECIMAL, qNUM_REAL, qINICIO_EXPOENTE, 
+    qSINAL_EXPOENTE, qNUMERO_EXPOENTE, qDOIS_PONTOS, qMENOR, qMAIOR, qCOMENTARIO,
     ATRIBUICAO, MENOR_IGUAL, DIFERENTE, MAIOR_IGUAL,
     DEAD
 } State;
@@ -15,7 +13,7 @@ typedef enum {
     LETRA, DIGITO, ESPACO, OPERADOR, DELIMITADOR, MENOR, MAIOR, DOIS_PONTOS, IGUAL, LBRACE, RBRACE, INDEFINIDO
 } CharType;
 
-// CLASSIFICAÇÃO DE CARACTERE
+// CLASSIFICAÇÃO DE CARACTERE (Alfabeto)
 CharType getCharType(char c) {
 
     if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) return LETRA;
@@ -123,16 +121,16 @@ bool ehEstadoFinal(State s) {
 // NOME DO ESTADO
 const char* nomeEstado(State s) {
     switch(s) {
-        case qIDENTIFICADOR: return "ID";
-        case qNUMERO_INTEIRO: return "NUM_INT";
-        case qNUM_REAL: return "NUM_REAL";
+        case qIDENTIFICADOR: return "IDENTIFICADOR";
+        case qNUMERO_INTEIRO: return "NUMERO INTEIRO";
+        case qNUM_REAL: return "NUMERO REAL";
         case ATRIBUICAO: return "ATRIBUICAO";
-        case MENOR_IGUAL: return "MENOR_IGUAL";
+        case MENOR_IGUAL: return "MENOR IGUAL";
         case DIFERENTE: return "DIFERENTE";
-        case MAIOR_IGUAL: return "MAIOR_IGUAL";
-        case qDOIS_PONTOS: return "COLON";
-        case qMENOR: return "LT";
-        case qMAIOR: return "GT";
+        case MAIOR_IGUAL: return "MAIOR IGUAL";
+        case qDOIS_PONTOS: return "DOIS PONTOS";
+        case qMENOR: return "MENOR QUE";
+        case qMAIOR: return "MAIOR QUE";
         default: return "INVALIDO";
     }
 }
@@ -154,21 +152,64 @@ int main() {
     char lexema[100];
     int pos = 0;
 
-    CharType tipo = getCharType(c);
-
-    // TRATAR DELIMITADORES DIRETAMENTE
-    if (tipo == DELIMITADOR) {
-        printf("<DELIM, %c> %d %d\n", c, linha, coluna);
-    }
-
-    // TRATAR OPERADORES SIMPLES
-    if (tipo == OPERADOR) {
-        printf("<OP, %c> %d %d\n", c, linha, coluna);
-    }
-
     while ((c = fgetc(arquivo)) != EOF) {
 
         coluna++;
+        CharType tipo = getCharType(c);
+
+        // IGNORA ESPAÇO
+        if (tipo == ESPACO) {
+
+            if (ehEstadoFinal(estAtual)) {
+                printf("<%s, %s> %d %d\n",
+                    nomeEstado(estAtual), lexema, linha, coluna);
+
+                estAtual = q0;
+                pos = 0;
+                lexema[0] = '\0';
+            }
+
+            if (c == '\n') {
+                linha++;
+                coluna = 0;
+            }
+
+            continue;
+        }
+
+        // DELIMITADORES
+        if (tipo == DELIMITADOR) {
+
+            if (ehEstadoFinal(estAtual)) {
+                printf("<%s, %s> %d %d\n",
+                    nomeEstado(estAtual), lexema, linha, coluna);
+            }
+
+            printf("<DELIM, %c> %d %d\n", c, linha, coluna);
+
+            estAtual = q0;
+            pos = 0;
+            lexema[0] = '\0';
+
+            continue;
+        }
+
+        // OPERADORES
+        if (tipo == OPERADOR) {
+
+            if (ehEstadoFinal(estAtual)) {
+                printf("<%s, %s> %d %d\n",
+                    nomeEstado(estAtual), lexema, linha, coluna);
+            }
+
+            printf("<OP, %c> %d %d\n", c, linha, coluna);
+
+            estAtual = q0;
+            pos = 0;
+            lexema[0] = '\0';
+
+            continue;
+        }
 
         State proximo = verificador(estAtual, c);
 
@@ -191,6 +232,7 @@ int main() {
 
                 estAtual = q0;
                 pos = 0;
+                lexema[0] = '\0';
             }
         } else {
             estAtual = proximo;
