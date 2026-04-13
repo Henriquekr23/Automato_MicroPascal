@@ -1,0 +1,14 @@
+then -> KW_THEN
+begin -> KW_BEGIN
+Teste -> ID
+do -> KW_DO
+var -> KW_VAR
+integer -> KW_INTEGER
+real -> KW_REAL
+else -> KW_ELSE
+x -> ID
+Y -> ID
+while -> KW_WHILE
+end -> KW_END
+program -> KW_PROGRAM
+if -> KW_IF

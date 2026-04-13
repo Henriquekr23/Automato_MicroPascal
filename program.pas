@@ -1,6 +1,3 @@
 program Teste;
-var
-x : integer;
-begin
-x := 10 + 2;
-end.
+var x, x, Y : integer;
+{oi}
