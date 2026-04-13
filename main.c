@@ -1,7 +1,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <ctype.h>
 
+#define QTD_PALAVRAS 11
+
+// Estados
 typedef enum {
     q0, qIDENTIFICADOR, qSINAL, qNUMERO_INTEIRO, qPONTO_DECIMAL, qNUM_REAL, qINICIO_EXPOENTE, 
     qSINAL_EXPOENTE, qNUMERO_EXPOENTE, qDOIS_PONTOS, qMENOR, qMAIOR, qCOMENTARIO,
@@ -9,9 +13,17 @@ typedef enum {
     DEAD
 } State;
 
+// Tipo do caractere
 typedef enum {
     LETRA, DIGITO, ESPACO, OPERADOR, DELIMITADOR, MENOR, MAIOR, DOIS_PONTOS, IGUAL, LBRACE, RBRACE, INDEFINIDO
 } CharType;
+
+// Palavras chave
+const char* palavrasChave[] = {
+    "program", "var", "integer", "real",
+    "begin", "end", "if", "then",
+    "else", "while", "do"
+};
 
 // CLASSIFICAÇÃO DE CARACTERE (Alfabeto)
 CharType getCharType(char c) {
@@ -108,11 +120,32 @@ State verificador(State s, char c) {
     }
 }
 
+// transforma string para minusculo
+void toLowerCase(char *str) {
+    for (int i = 0; str[i]; i++) {
+        str[i] = tolower(str[i]);
+    }
+}
+
+// verifica se a palavra está contida nas palavras chaves
+bool ehPalavraChave(char *lexema) {
+    char temp[100];
+    strcpy(temp, lexema);
+
+    toLowerCase(temp);
+
+    for (int i = 0; i < QTD_PALAVRAS; i++) {
+        if (strcmp(temp, palavrasChave[i]) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
 // ESTADOS FINAIS
 bool ehEstadoFinal(State s) {
     return (
-        s == qIDENTIFICADOR || s == qNUMERO_INTEIRO || s == qNUM_REAL ||
-        s == qNUMERO_EXPOENTE ||
+        s == qIDENTIFICADOR || s == qNUMERO_INTEIRO || s == qNUM_REAL || s == qNUMERO_EXPOENTE ||
         s == qDOIS_PONTOS || s == qMENOR || s == qMAIOR ||
         s == ATRIBUICAO || s == MENOR_IGUAL || s == DIFERENTE || s == MAIOR_IGUAL
     );
@@ -135,6 +168,17 @@ const char* nomeEstado(State s) {
     }
 }
 
+// funçao para imprimir o token e chamar a funçao se o identificador é palavra chave
+void imprimirToken(State estAtual, char *lexema, int linha, int coluna) {
+
+    if (estAtual == qIDENTIFICADOR && ehPalavraChave(lexema)) {
+        printf("<PALAVRA CHAVE, %s> %d %d\n", lexema, linha, coluna);
+    } else {
+        printf("<%s, %s> %d %d\n",
+            nomeEstado(estAtual), lexema, linha, coluna);
+    }
+}
+
 int main() {
 
     FILE *arquivo = fopen("program.pas", "r");
@@ -152,6 +196,7 @@ int main() {
     char lexema[100];
     int pos = 0;
 
+    // loop while que pega um caráctere por vez
     while ((c = fgetc(arquivo)) != EOF) {
 
         coluna++;
@@ -161,8 +206,7 @@ int main() {
         if (tipo == ESPACO) {
 
             if (ehEstadoFinal(estAtual)) {
-                printf("<%s, %s> %d %d\n",
-                    nomeEstado(estAtual), lexema, linha, coluna);
+                imprimirToken(estAtual, lexema, linha, coluna);
 
                 estAtual = q0;
                 pos = 0;
@@ -177,15 +221,14 @@ int main() {
             continue;
         }
 
-        // DELIMITADORES
+        // se for delimitador
         if (tipo == DELIMITADOR) {
 
             if (ehEstadoFinal(estAtual)) {
-                printf("<%s, %s> %d %d\n",
-                    nomeEstado(estAtual), lexema, linha, coluna);
+                imprimirToken(estAtual, lexema, linha, coluna);
             }
 
-            printf("<DELIM, %c> %d %d\n", c, linha, coluna);
+            imprimirToken(estAtual, lexema, linha, coluna);
 
             estAtual = q0;
             pos = 0;
@@ -194,15 +237,14 @@ int main() {
             continue;
         }
 
-        // OPERADORES
+        // se for operador
         if (tipo == OPERADOR) {
 
             if (ehEstadoFinal(estAtual)) {
-                printf("<%s, %s> %d %d\n",
-                    nomeEstado(estAtual), lexema, linha, coluna);
+                imprimirToken(estAtual, lexema, linha, coluna);
             }
 
-            printf("<OP, %c> %d %d\n", c, linha, coluna);
+            printf("<OPERADOR, %c> %d %d\n", c, linha, coluna);
 
             estAtual = q0;
             pos = 0;
@@ -216,8 +258,7 @@ int main() {
         if (proximo == DEAD) {
             if (ehEstadoFinal(estAtual)) {
 
-                printf("<%s, %s> %d %d\n",
-                    nomeEstado(estAtual), lexema, linha, coluna);
+                imprimirToken(estAtual, lexema, linha, coluna);
 
                 estAtual = q0;
                 pos = 0;
