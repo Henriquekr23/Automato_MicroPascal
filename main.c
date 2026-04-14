@@ -70,9 +70,7 @@ CharType getCharType(char c) {
 }
 
 // funcao das transicoes
-State verificador(State s, char c) {
-
-    CharType tipo = getCharType(c);
+State verificador(State s, char c, CharType tipo) {
 
     switch (s) {
 
@@ -195,7 +193,7 @@ Simbolo* buscarSimbolo(char *lexema) {
     Simbolo *atual = tabela[idx];
 
     while (atual != NULL) {
-        if (strcasecmp(atual->lexema, lexema) == 0) {
+        if (strcmp(atual->lexema, lexema) == 0) {
             return atual;
         }
         atual = atual->prox;
@@ -224,21 +222,17 @@ void inserirSimbolo(char *lexema, const char *tipo) {
 // converte o token na keyword respectiva
 TokenType getKeywordToken(char *lexema) {
 
-    char temp[100];
-    strcpy(temp, lexema);
-    toLowerCase(temp);
-
-    if (strcmp(temp, "program") == 0) return KW_PROGRAM;
-    if (strcmp(temp, "var") == 0) return KW_VAR;
-    if (strcmp(temp, "integer") == 0) return KW_INTEGER;
-    if (strcmp(temp, "real") == 0) return KW_REAL;
-    if (strcmp(temp, "begin") == 0) return KW_BEGIN;
-    if (strcmp(temp, "end") == 0) return KW_END;
-    if (strcmp(temp, "if") == 0) return KW_IF;
-    if (strcmp(temp, "then") == 0) return KW_THEN;
-    if (strcmp(temp, "else") == 0) return KW_ELSE;
-    if (strcmp(temp, "while") == 0) return KW_WHILE;
-    if (strcmp(temp, "do") == 0) return KW_DO;
+    if (strcmp(lexema, "program") == 0) return KW_PROGRAM;
+    if (strcmp(lexema, "var") == 0) return KW_VAR;
+    if (strcmp(lexema, "integer") == 0) return KW_INTEGER;
+    if (strcmp(lexema, "real") == 0) return KW_REAL;
+    if (strcmp(lexema, "begin") == 0) return KW_BEGIN;
+    if (strcmp(lexema, "end") == 0) return KW_END;
+    if (strcmp(lexema, "if") == 0) return KW_IF;
+    if (strcmp(lexema, "then") == 0) return KW_THEN;
+    if (strcmp(lexema, "else") == 0) return KW_ELSE;
+    if (strcmp(lexema, "while") == 0) return KW_WHILE;
+    if (strcmp(lexema, "do") == 0) return KW_DO;
 
     return -1;
 }
@@ -246,11 +240,16 @@ TokenType getKeywordToken(char *lexema) {
 // funçao para escrever o token no arquivo .lex
 void imprimirToken(State estAtual, char *lexema, int linha, int colInicial, FILE *arqLex) {
 
+    // já salva em minúsculo, mas preserva o lexema original
+    char temp[100];
+    strcpy(temp, lexema);
+    toLowerCase(temp);
+
     TokenType token;
 
     if (estAtual == qIDENTIFICADOR) {
 
-        TokenType kw = getKeywordToken(lexema);
+        TokenType kw = getKeywordToken(temp);
 
         if (kw != -1) {
             token = kw;
@@ -282,9 +281,6 @@ void imprimirToken(State estAtual, char *lexema, int linha, int colInicial, FILE
 
     } else if (estAtual == qMAIOR) {
         token = OP_GT;
-
-    } else if (estAtual == q0) {
-        token = OP_EQ;
 
     } else if (estAtual == qDOIS_PONTOS) {
         token = SMB_COL; 
@@ -340,6 +336,17 @@ void inicializarTS() {
     }
 }
 
+void liberarTS() {
+    for (int i = 0; i < TAM_TS; i++) {
+        Simbolo *atual = tabela[i];
+        while (atual) {
+            Simbolo *tmp = atual;
+            atual = atual->prox;
+            free(tmp);
+        }
+    }
+}
+
 // MAIN
 int main() {
 
@@ -372,138 +379,179 @@ int main() {
     char lexema[100];
     int pos = 0;
 
+    // buffer para otimizacao da leitura de cada carectere
+    char linhaBuffer[256];
+
     // loop while que pega um caráctere por vez
-    while ((c = fgetc(arquivo)) != EOF) {
+    while (fgets(linhaBuffer, sizeof(linhaBuffer), arquivo)) {
 
-        coluna++;
-        CharType tipo = getCharType(c);
+        for (int i = 0; linhaBuffer[i] != '\0'; i++){
+            
+            char c = linhaBuffer[i];
+            coluna++;
+            CharType tipo = getCharType(c);
 
-        if (pos == 0 && tipo != ESPACO) {
-            colInicial = coluna;
-        }
-
-        // se for comentario ignora para nao precisar verificar todo o texto dentro
-        if (estAtual == qCOMENTARIO) {
-            if (c == '}') {
-                estAtual = q0;
-            }
-            continue;
-        }
-
-        // IGNORA ESPAÇO
-        if (tipo == ESPACO) {
-
-            if (ehEstadoFinal(estAtual)) {
-                imprimirToken(estAtual, lexema, linha, colInicial, arqLex);
-
-                estAtual = q0;
-                pos = 0;
-                lexema[0] = '\0';
+            // pega o valor da coluna do inicio da palavra
+            if (pos == 0 && tipo != ESPACO) {
+                colInicial = coluna;
             }
 
-            if (c == '\n') {
-                linha++;
-                coluna = 0;
-            }
-
-            continue;
-        }
-
-        // se for delimitador
-        if (tipo == DELIMITADOR) {
-
-            if (ehEstadoFinal(estAtual)) {
-                imprimirToken(estAtual, lexema, linha, colInicial, arqLex);
-            }
-
-            TokenType token;
-
-            if (c == ';') token = SMB_SEM;
-            else if (c == ',') token = SMB_COM;
-            else if (c == '(') token = SMB_OPA;
-            else if (c == ')') token = SMB_CPA;
-            else if (c == '.') token = SMB_DOT;
-            else {
-                fprintf(arqErr, "Erro lexico: delimitador desconhecido '%c'\n", c);
+            // se for comentario ignora para nao precisar verificar todo o texto dentro
+            if (estAtual == qCOMENTARIO) {
+                if (c == '}') {
+                    estAtual = q0;
+                }
                 continue;
             }
 
-            fprintf(arqLex, "<%s, %c> %d %d\n",
-                tokenToString(token), c, linha, coluna);
+            // se for espaço ignora
+            if (tipo == ESPACO) {
 
-            estAtual = q0;
-            pos = 0;
-            lexema[0] = '\0';
+                if (ehEstadoFinal(estAtual)) {
+                    imprimirToken(estAtual, lexema, linha, colInicial, arqLex);
 
-            continue;
-        }
+                    estAtual = q0;
+                    pos = 0;
+                    lexema[0] = '\0';
+                }
 
-        if(tipo == IGUAL) {
-            fprintf(arqLex, "<%s, %c> %d %d\n",
-                tokenToString(OP_EQ), c, linha, coluna);
-            continue;
-        }
-
-        // se for operador
-        if (tipo == OPERADOR) {
-
-            if (ehEstadoFinal(estAtual)) {
-                imprimirToken(estAtual, lexema, linha, colInicial, arqLex);
+                continue;
             }
 
-            TokenType token;
+            // ponto após número (pode ser real ou erro)
+            if (c == '.' && estAtual == qNUMERO_INTEIRO) {
 
-            if (c == '+') token = OP_AD;
-            else if (c == '-') token = OP_MIN;
-            else if (c == '*') token = OP_MUL;
-            else token = OP_DIV;
+                State proximo = verificador(estAtual, c, tipo);
 
-            fprintf(arqLex, "<%s, %c> %d %d\n",
-                tokenToString(token), c, linha, coluna);
+                estAtual = proximo;
+                lexema[pos++] = c;
+                lexema[pos] = '\0';
 
-            estAtual = q0;
-            pos = 0;
-            lexema[0] = '\0';
+                continue;
+            }
 
-            continue;
-        }
+            // se for delimitador
+            if (tipo == DELIMITADOR) {
 
-        State proximo = verificador(estAtual, c);
+                if (estAtual == qPONTO_DECIMAL) {
 
-        if (proximo == DEAD) {
+                    fprintf(arqErr, "Erro lexico: numero real mal formado '%s' linha %d coluna %d\n",
+                        lexema, linha, colInicial);
 
-            if (ehEstadoFinal(estAtual)) {
+                    fprintf(arqLex, "<NUM_REAL_MALFORMADO, %s> %d %d\n",
+                        lexema, linha, colInicial);
 
-                imprimirToken(estAtual, lexema, linha, colInicial, arqLex);
+                }
+                else if (ehEstadoFinal(estAtual)) {
+                    imprimirToken(estAtual, lexema, linha, colInicial, arqLex);
+                }
 
-                estAtual = q0;
-                pos = 0;
+                TokenType token;
 
-                // só volta o caractere se ele NÃO for espaço
-                if (getCharType(c) != ESPACO)
-                    ungetc(c, arquivo);
-                    coluna--;
+                if (c == ';') token = SMB_SEM;
+                else if (c == ',') token = SMB_COM;
+                else if (c == '(') token = SMB_OPA;
+                else if (c == ')') token = SMB_CPA;
+                else if (c == '.') token = SMB_DOT;
+                else {
+                    fprintf(arqErr, "Erro lexico: delimitador desconhecido '%c'\n", c);
+                    continue;
+                }
 
-            } else {
-
-                fprintf(arqErr, "Erro lexico: '%c' linha %d coluna %d\n", c, linha, coluna);
+                fprintf(arqLex, "<%s, %c> %d %d\n",
+                    tokenToString(token), c, linha, coluna);
 
                 estAtual = q0;
                 pos = 0;
                 lexema[0] = '\0';
+
+                continue;
             }
 
-        } else {
-            estAtual = proximo;
+            if (tipo == IGUAL && estAtual != qDOIS_PONTOS) {
+                fprintf(arqLex, "<%s, %c> %d %d\n",
+                    tokenToString(OP_EQ), c, linha, coluna);
+                continue;
+            }
 
-            lexema[pos++] = c;
-            lexema[pos] = '\0';
-        }
+            // se for operador
+            if (tipo == OPERADOR) {
 
-        if (c == '\n') {
-            linha++;
-            coluna = 0;
+                if (ehEstadoFinal(estAtual)) {
+                    imprimirToken(estAtual, lexema, linha, colInicial, arqLex);
+                }
+
+                TokenType token;
+
+                if (c == '+') token = OP_AD;
+                else if (c == '-') token = OP_MIN;
+                else if (c == '*') token = OP_MUL;
+                else token = OP_DIV;
+
+                fprintf(arqLex, "<%s, %c> %d %d\n",
+                    tokenToString(token), c, linha, coluna);
+
+                estAtual = q0;
+                pos = 0;
+                lexema[0] = '\0';
+
+                continue;
+            }
+
+            State proximo = verificador(estAtual, c, tipo);
+
+            if (proximo == DEAD) {
+
+                if (estAtual == qPONTO_DECIMAL) {
+
+                    fprintf(arqErr, "Erro lexico: numero real mal formado '%s' linha %d coluna %d\n",
+                            lexema, linha, colInicial);
+
+                    // 🔥 imprime o número mesmo com erro
+                    fprintf(arqLex, "<NUM_REAL_MALFORMADO, %s> %d %d\n",
+                            lexema, linha, colInicial);
+
+                    estAtual = q0;
+                    pos = 0;
+                    lexema[0] = '\0';
+
+                    i--;
+                    coluna--;
+
+                    continue;
+                }
+
+                if (ehEstadoFinal(estAtual)) {
+
+                    imprimirToken(estAtual, lexema, linha, colInicial, arqLex);
+
+                    estAtual = q0;
+                    pos = 0;
+
+                    // só volta o caractere se ele NÃO for espaço
+                    if (getCharType(c) != ESPACO) {
+                        i--;
+                        coluna--;
+                    }
+                } else {
+
+                    fprintf(arqErr, "Erro lexico: '%c' linha %d coluna %d\n", c, linha, coluna);
+
+                    estAtual = q0;
+                    pos = 0;
+                    lexema[0] = '\0';
+                }
+
+            } else {
+                estAtual = proximo;
+
+                lexema[pos++] = c;
+                lexema[pos] = '\0';
+            }
         }
+        
+        linha++;
+        coluna = 0;
     }
 
     if (estAtual == qCOMENTARIO) {
@@ -511,10 +559,13 @@ int main() {
     }
 
     imprimirTS(arqTS);
+
     fclose(arquivo);
     fclose(arqLex);
     fclose(arqTS);
     fclose(arqErr);
+
+    liberarTS();
 
     return 0;
 }
