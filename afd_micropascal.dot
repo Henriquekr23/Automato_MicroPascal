@@ -7,10 +7,10 @@ digraph AFD_MicroPascal {
 
     node [shape=circle, fontname="Arial"];
 
-    // ESTADOS FINAIS
+    // ESTADOS FINAIS (iguais ao código)
     qIDENTIFICADOR [shape=doublecircle];
     qNUMERO_INTEIRO [shape=doublecircle];
-    qNUMERO_REAL [shape=doublecircle];
+    qNUM_REAL [shape=doublecircle];
     qNUMERO_EXPOENTE [shape=doublecircle];
 
     qDOIS_PONTOS [shape=doublecircle];
@@ -22,37 +22,31 @@ digraph AFD_MicroPascal {
     DIFERENTE [shape=doublecircle];
     MAIOR_IGUAL [shape=doublecircle];
 
-    // ESTADO q0
+    // ESTADO INICIAL
     ponto [shape=point];
     ponto -> q0;
 
-    // IDENTIFICADORES
-    q0 -> qIDENTIFICADOR [label="letra"];
-    qIDENTIFICADOR -> qIDENTIFICADOR [label="letra | dígito"];
+    // IDENTIFICADOR
+    q0 -> qIDENTIFICADOR [label="LETRA"];
+    qIDENTIFICADOR -> qIDENTIFICADOR [label="LETRA | DIGITO"];
 
-    // NÚMEROS
-    q0 -> qNUMERO_INTEIRO [label="dígito"];
-    q0 -> qSINAL [label="+ | -"];
+    // NÚMERO INTEIRO
+    q0 -> qNUMERO_INTEIRO [label="DIGITO"];
+    qNUMERO_INTEIRO -> qNUMERO_INTEIRO [label="DIGITO"];
 
-    qSINAL -> qNUMERO_INTEIRO [label="dígito"];
-
-    qNUMERO_INTEIRO -> qNUMERO_INTEIRO [label="dígito"];
+    // REAL
     qNUMERO_INTEIRO -> qPONTO_DECIMAL [label="."];
+    qPONTO_DECIMAL -> qNUM_REAL [label="DIGITO"];
+    qNUM_REAL -> qNUM_REAL [label="DIGITO"];
 
-    qPONTO_DECIMAL -> qNUMERO_REAL [label="dígito"];
-    qNUMERO_REAL -> qNUMERO_REAL [label="dígito"];
-
-    // Expoente
-    qNUMERO_INTEIRO -> qINICIO_EXPOENTE [label="E | e"];
-    qNUMERO_REAL -> qINICIO_EXPOENTE [label="E | e"];
-
+    // EXPOENTE
+    qNUM_REAL -> qINICIO_EXPOENTE [label="E | e"];
     qINICIO_EXPOENTE -> qSINAL_EXPOENTE [label="+ | -"];
-    qINICIO_EXPOENTE -> qNUMERO_EXPOENTE [label="dígito"];
+    qINICIO_EXPOENTE -> qNUMERO_EXPOENTE [label="DIGITO"];
+    qSINAL_EXPOENTE -> qNUMERO_EXPOENTE [label="DIGITO"];
+    qNUMERO_EXPOENTE -> qNUMERO_EXPOENTE [label="DIGITO"];
 
-    qSINAL_EXPOENTE -> qNUMERO_EXPOENTE [label="dígito"];
-    qNUMERO_EXPOENTE -> qNUMERO_EXPOENTE [label="dígito"];
-
-    // OPERADORES
+    // OPERADORES RELACIONAIS
     q0 -> qDOIS_PONTOS [label=":"];
     qDOIS_PONTOS -> ATRIBUICAO [label="="];
 
@@ -63,7 +57,7 @@ digraph AFD_MicroPascal {
     q0 -> qMAIOR [label=">"];
     qMAIOR -> MAIOR_IGUAL [label="="];
 
-    // COMENTÁRIOS
+    // COMENTÁRIO
     q0 -> qCOMENTARIO [label="{"];
     qCOMENTARIO -> qCOMENTARIO [label="qualquer exceto }"];
     qCOMENTARIO -> q0 [label="}"];
