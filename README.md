@@ -16,6 +16,7 @@ A implementação foi feita em linguagem C, utilizando um Autômato Finito Deter
 ### Estrutura do Projeto
 
 O projeto é composto pelos seguintes arquivos principais:
+
 	•	main.c — implementação do analisador léxico
 	•	program.pas — arquivo de entrada (código fonte em Pascal)
 	•	saida.lex — arquivo contendo os tokens reconhecidos
@@ -28,6 +29,7 @@ O projeto é composto pelos seguintes arquivos principais:
 O analisador lê o arquivo de entrada caractere por caractere e utiliza um AFD para determinar a qual token cada sequência pertence.
 
 Durante a execução, o sistema:
+
 	1.	Identifica o tipo de cada caractere (letra, dígito, operador, etc.)
 	2.	Realiza transições entre estados do autômato
 	3.	Forma lexemas válidos
@@ -39,7 +41,8 @@ Durante a execução, o sistema:
 
 O analisador reconhece os seguintes tipos de tokens:
 
-Palavras-chave
+Palavras-chave:
+
 	•	program
 	•	var
 	•	integer
@@ -52,32 +55,37 @@ Palavras-chave
 	•	while
 	•	do
 
-Identificadores
+Identificadores:
 
 Sequências iniciadas por letra, seguidas de letras ou dígitos.
 
-Números
+Números:
+
 	•	Inteiros (ex: 10, 25)
 	•	Reais (ex: 3.14)
 	•	Reais com expoente (ex: 2.5E10)
 
 Observação: o expoente é reconhecido apenas após números reais.
 
-Operadores
+Operadores:
+
 	•	Aritméticos: +, -, *, /
 	•	Relacionais: <, <=, >, >=, <>, =
 	•	Atribuição: :=
 
-Delimitadores
+Delimitadores:
+
 	•	; , ( ) .
 
-Comentários
+Comentários:
+
 	•	Delimitados por { e }
 	•	São ignorados pelo analisador (não geram tokens)
 
 ### Tabela de Símbolos
 
 A tabela de símbolos armazena:
+
 	•	Identificadores encontrados no código
 	•	Palavras-chave previamente carregadas
 
@@ -86,6 +94,7 @@ A estrutura utilizada é uma tabela hash com encadeamento para resolução de co
 ### Tratamento de Erros
 
 O analisador identifica:
+
 	•	Caracteres inválidos
 	•	Sequências mal formadas
 	•	Comentários não fechados
@@ -95,6 +104,7 @@ Os erros são registrados no arquivo saida.err, indicando linha e coluna.
 ### Controle de Posição
 
 Cada token reconhecido contém:
+
 	•	Linha
 	•	Coluna inicial
 
@@ -105,6 +115,7 @@ A coluna inicial é controlada no momento em que o lexema começa a ser formado,
 O reconhecimento dos tokens é baseado em um AFD implementado na função verificador.
 
 Estados principais:
+
 	•	q0 — estado inicial
 	•	qIDENTIFICADOR
 	•	qNUMERO_INTEIRO
