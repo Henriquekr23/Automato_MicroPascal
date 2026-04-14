@@ -13,6 +13,12 @@ A implementação foi feita em linguagem C, utilizando um Autômato Finito Deter
 	•	Construir uma tabela de símbolos
 	•	Detectar e reportar erros léxicos
 
+### Como executar
+	•	Selecione o código que deseja testar dentro da pasta de /Test_Codes
+	•	Copie o código e cole dentro do arquivo /program.pas
+	•	Se quiser também pode escrever o código de sua prefrerência, mas deve ser dentro do arquivo /program.pas, pois é ele que o sistema utiliza como referência para leitura
+	•	Depois disso feito, é só compilar e os resultados aparecerão nos arquivos gerados .err, .lex e .tabela
+
 ### Estrutura do Projeto
 
 O projeto é composto pelos seguintes arquivos principais:
